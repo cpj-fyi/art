@@ -1,0 +1,17 @@
+name = "monafor"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Custom domain — set up via Cloudflare dashboard after first deploy
+# routes = [
+#   { pattern = "art.cpj.fyi/*", custom_domain = true }
+# ]
+
+# KV namespaces — created via `wrangler kv:namespace create ART_CACHE`
+# [[kv_namespaces]]
+# binding = "ART_CACHE"
+# id = "<fill in after creating>"
+
+[vars]
+GHOST_API_URL = "https://cpj.fyi/ghost/api/content/posts"
+# GHOST_CONTENT_KEY set as a secret via `wrangler secret put GHOST_CONTENT_KEY`
