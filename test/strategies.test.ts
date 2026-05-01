@@ -75,7 +75,7 @@ describe("strategies", () => {
 
   it("chaotic: emits marks on a fine sub-grid", async () => {
     const { hash, canvas } = await setup();
-    const out = runStrategy("chaotic", { hash, canvas, mark: "pixel", palette: PALETTE, density: 0.3, cellSize: 15 });
+    const out = runStrategy("chaotic", { hash, canvas, mark: "pixel", palette: PALETTE, density: 0.12, cellSize: 15 });
     expect(out.length).toBeGreaterThan(0);
     const offsets = new Set(out.map((m) => m.x % 15));
     expect(offsets.size).toBeGreaterThan(1);

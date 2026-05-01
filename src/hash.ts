@@ -10,13 +10,13 @@ export class Hash {
     const data = new TextEncoder().encode(input);
     let digest = await crypto.subtle.digest("SHA-256", data);
     const chunks: Uint8Array[] = [new Uint8Array(digest)];
-    // Pre-extend to 2048 chained hashes = 65536 bytes = 524288 bits.
-    // Dense strategies (grid density=1, chaotic) can consume ~340K bits per call.
-    for (let i = 0; i < 2047; i++) {
+    // Pre-extend to 4096 chained hashes = 128KB = 1,048,576 bits.
+    // chaotic at subStep=5 on 1200×630 consumes ~784K bits; other strategies well under.
+    for (let i = 0; i < 4095; i++) {
       digest = await crypto.subtle.digest("SHA-256", digest);
       chunks.push(new Uint8Array(digest));
     }
-    const total = new Uint8Array(2048 * 32);
+    const total = new Uint8Array(4096 * 32);
     chunks.forEach((c, i) => total.set(c, i * 32));
     return new Hash(total);
   }
