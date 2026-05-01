@@ -67,14 +67,18 @@ describe("composePanels", () => {
     expect(composePanels(a, meta, PALETTE)).toEqual(composePanels(b, meta, PALETTE));
   });
 
-  it("does not use chaotic or gravity strategies", async () => {
-    for (const slug of ["s1","s2","s3","s4","s5"]) {
-      const hash = await Hash.from(slug);
-      const panels = composePanels(hash, { slug, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, PALETTE);
+  it("can use gravity and chaotic strategies (sparse bucket)", async () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 200 && seen.size < 2; i++) {
+      const hash = await Hash.from(`sample-${i}`);
+      const panels = composePanels(hash, { slug: `s${i}`, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, ["#FF3252", "#222", "#999", "#E9306B"]);
       for (const p of panels) {
-        expect(p.strategy).not.toBe("chaotic");
-        expect(p.strategy).not.toBe("gravity");
+        if (p.strategy === "gravity" || p.strategy === "chaotic") {
+          seen.add(p.strategy);
+        }
       }
     }
+    expect(seen.has("gravity")).toBe(true);
+    expect(seen.has("chaotic")).toBe(true);
   });
 });
