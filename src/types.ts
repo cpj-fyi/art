@@ -48,6 +48,18 @@ export type Layer = {
   cellSize: number;   // px
 };
 
+export type Panel = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  strategy: StrategyKey;
+  mark: MarkKey;
+  palette: readonly string[];
+  density: number;
+  cellSize: number;
+};
+
 export type PostMetadata = {
   slug: string;
   primaryTag: string | null;

@@ -1,0 +1,80 @@
+import { describe, it, expect } from "vitest";
+import { composePanels } from "../src/compose";
+import { Hash } from "../src/hash";
+import { CANVAS } from "../src/types";
+
+const PALETTE = ["#222", "#FF3252", "#999", "#E9306B", "#8438F2"];
+
+describe("composePanels", () => {
+  it("returns 3 to 5 panels", async () => {
+    for (const slug of ["a", "b", "c", "d", "e", "f"]) {
+      const hash = await Hash.from(slug);
+      const panels = composePanels(hash, { slug, primaryTag: null, titleLength: 40, publishedAtMs: Date.now() }, PALETTE);
+      expect(panels.length).toBeGreaterThanOrEqual(3);
+      expect(panels.length).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("longer title produces more panels (averaged)", async () => {
+    let shortTotal = 0;
+    let longTotal = 0;
+    for (let i = 0; i < 10; i++) {
+      const sh = await Hash.from(`p${i}`);
+      const lh = await Hash.from(`p${i}`);
+      shortTotal += composePanels(sh, { slug: `p${i}`, primaryTag: null, titleLength: 15, publishedAtMs: 0 }, PALETTE).length;
+      longTotal  += composePanels(lh, { slug: `p${i}`, primaryTag: null, titleLength: 95, publishedAtMs: 0 }, PALETTE).length;
+    }
+    expect(longTotal).toBeGreaterThanOrEqual(shortTotal);
+  });
+
+  it("panels do not overlap", async () => {
+    const hash = await Hash.from("overlap-check");
+    const panels = composePanels(hash, { slug: "x", primaryTag: null, titleLength: 50, publishedAtMs: 0 }, PALETTE);
+    for (let i = 0; i < panels.length; i++) {
+      for (let j = i + 1; j < panels.length; j++) {
+        const a = panels[i]!;
+        const b = panels[j]!;
+        const overlapX = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+        const overlapY = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+        expect(overlapX * overlapY).toBe(0);
+      }
+    }
+  });
+
+  it("panels stay within canvas bounds", async () => {
+    const hash = await Hash.from("bounds");
+    const panels = composePanels(hash, { slug: "x", primaryTag: null, titleLength: 50, publishedAtMs: 0 }, PALETTE);
+    for (const p of panels) {
+      expect(p.x).toBeGreaterThanOrEqual(0);
+      expect(p.y).toBeGreaterThanOrEqual(0);
+      expect(p.x + p.width).toBeLessThanOrEqual(CANVAS.width);
+      expect(p.y + p.height).toBeLessThanOrEqual(CANVAS.height);
+    }
+  });
+
+  it("each panel has a non-empty palette", async () => {
+    const hash = await Hash.from("palette-check");
+    const panels = composePanels(hash, { slug: "x", primaryTag: "foundations", titleLength: 50, publishedAtMs: 0 }, PALETTE);
+    for (const p of panels) {
+      expect(p.palette.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("panels are deterministic for the same hash + palette", async () => {
+    const a = await Hash.from("repeat");
+    const b = await Hash.from("repeat");
+    const meta = { slug: "x", primaryTag: null, titleLength: 50, publishedAtMs: 0 };
+    expect(composePanels(a, meta, PALETTE)).toEqual(composePanels(b, meta, PALETTE));
+  });
+
+  it("does not use chaotic or gravity strategies", async () => {
+    for (const slug of ["s1","s2","s3","s4","s5"]) {
+      const hash = await Hash.from(slug);
+      const panels = composePanels(hash, { slug, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, PALETTE);
+      for (const p of panels) {
+        expect(p.strategy).not.toBe("chaotic");
+        expect(p.strategy).not.toBe("gravity");
+      }
+    }
+  });
+});

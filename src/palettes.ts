@@ -13,8 +13,6 @@ const SECTION_ARC = [
 
 const SECTION_TAGS = SECTION_ARC.map((s) => s.tag);
 
-const ESSAYS_BGS = ["#221552", "#E5601F"] as const;
-
 export const MOODS: Record<Mood, Palette> = {
   book: {
     bg: "#F8F8F8",
@@ -28,8 +26,11 @@ export const MOODS: Record<Mood, Palette> = {
     colors: ["#00FF88", "#00CCFF", "#FF00C8", "#FFE600", "#FFFFFF", "#666666"],
   },
   essays: {
-    bg: "#E5601F",  // legacy field — selectPalette overrides this for essays. Kept for paletteFor compatibility.
-    colors: ["#221552", "#E5601F", "#FFFFFF"],
+    bg: "#F8F8F8",
+    colors: [
+      "#222222", "#FF3252", "#E9306B", "#D83586",
+      "#BD31BF", "#9F36CE", "#8438F2", "#999999",
+    ],
   },
 };
 
@@ -94,7 +95,7 @@ export type ResolvedPalette = {
  * Picks the per-post bg + foreground colors deterministically from the hash.
  * - Book: static bg (#F8F8F8); colors = section-weighted palette
  * - Radar: static bg (#1A1A1A); colors = uniform 6-color neon
- * - Essays: bg picked from {eggplant, persimmon}; colors = white + the other one
+ * - Essays: static bg (#F8F8F8); colors = HP 8-color palette (uniform pick, no section bias)
  *
  * Consumes hash bits — call before any other layer-composition decisions
  * so the bit stream stays deterministic.
@@ -102,12 +103,7 @@ export type ResolvedPalette = {
 export function selectPalette(tag: string | null, hash: Hash): ResolvedPalette {
   const mood = moodFor(tag);
   if (mood === "essays") {
-    const bg = hash.pick(ESSAYS_BGS);
-    const fg: string[] = ["#FFFFFF"];
-    for (const c of ESSAYS_BGS) {
-      if (c !== bg) fg.push(c);
-    }
-    return { bg, colors: fg };
+    return { bg: MOODS.essays.bg, colors: MOODS.essays.colors };
   }
   if (mood === "radar") {
     return { bg: MOODS.radar.bg, colors: MOODS.radar.colors };
