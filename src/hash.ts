@@ -10,12 +10,12 @@ export class Hash {
     const data = new TextEncoder().encode(input);
     let digest = await crypto.subtle.digest("SHA-256", data);
     const chunks: Uint8Array[] = [new Uint8Array(digest)];
-    // Pre-extend to 8 chained hashes = 256 bytes = 2048 bits. Plenty.
-    for (let i = 0; i < 7; i++) {
+    // Pre-extend to 32 chained hashes = 1024 bytes = 8192 bits. Plenty.
+    for (let i = 0; i < 31; i++) {
       digest = await crypto.subtle.digest("SHA-256", digest);
       chunks.push(new Uint8Array(digest));
     }
-    const total = new Uint8Array(chunks.length * 32);
+    const total = new Uint8Array(32 * 32);
     chunks.forEach((c, i) => total.set(c, i * 32));
     return new Hash(total);
   }
