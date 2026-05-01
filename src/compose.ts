@@ -54,7 +54,8 @@ function pickLayer(
   const mark = hash.pick(markPool);
   const density = densityFor(slot, hash, meta);
   const cellSize = cellSizeFor(slot, hash);
-  return { strategy, mark, palette, density, cellSize };
+  const layerColors = pickDistinctN(hash, palette, 3);
+  return { strategy, mark, palette: layerColors, density, cellSize };
 }
 
 function densityFor(slot: "base" | "figure" | "accent", hash: Hash, meta: PostMetadata): number {
@@ -64,7 +65,7 @@ function densityFor(slot: "base" | "figure" | "accent", hash: Hash, meta: PostMe
     return clamp01((0.15 + t * 0.7) * radarFactor);
   }
   if (slot === "figure") {
-    return clamp01((0.3 + hash.float() * 0.4) * radarFactor);
+    return clamp01((0.15 + hash.float() * 0.25) * radarFactor);
   }
   return clamp01((0.05 + hash.float() * 0.15) * radarFactor);
 }
@@ -76,4 +77,22 @@ function cellSizeFor(slot: "base" | "figure" | "accent", hash: Hash): number {
 
 function clamp01(x: number): number {
   return x < 0 ? 0 : x > 1 ? 1 : x;
+}
+
+function pickDistinctN(hash: Hash, pool: readonly string[], n: number): readonly string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  // Bound attempts so we don't hash-exhaust on a tiny palette.
+  const maxAttempts = pool.length * 4;
+  let attempts = 0;
+  while (result.length < n && attempts < maxAttempts) {
+    const c = hash.pick(pool);
+    if (!seen.has(c)) {
+      seen.add(c);
+      result.push(c);
+    }
+    attempts++;
+  }
+  // Fallback: if pool was tiny and we couldn't reach n, return what we got (must be ≥1).
+  return result.length > 0 ? result : [pool[0] ?? "#000000"];
 }

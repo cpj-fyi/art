@@ -67,20 +67,28 @@ describe("composeLayers", () => {
     expect(radarLayers[0]!.density).toBeLessThanOrEqual(bookLayers[0]!.density);
   });
 
-  it("Book layers receive a section-weighted palette", async () => {
-    const hash = await Hash.from("book-weight");
-    const layers = composeLayers(hash, { slug: "x", primaryTag: "foundations", titleLength: 40, publishedAtMs: Date.now() });
-    for (const layer of layers) {
-      const sectionCount = layer.palette.filter((c) => c === "#FF3252").length;
-      expect(sectionCount).toBeGreaterThan(1);
+  it("Book layers tend to include the section color", async () => {
+    let sectionAppearances = 0;
+    let totalLayers = 0;
+    for (let i = 0; i < 30; i++) {
+      const hash = await Hash.from(`book-bias-${i}`);
+      const layers = composeLayers(hash, { slug: `s${i}`, primaryTag: "foundations", titleLength: 40, publishedAtMs: Date.now() });
+      for (const layer of layers) {
+        totalLayers++;
+        if (layer.palette.includes("#FF3252")) sectionAppearances++;
+      }
     }
+    // With section weighted 8× in a 23-element pool, 3 distinct picks should
+    // include the section color most of the time.
+    expect(sectionAppearances / totalLayers).toBeGreaterThan(0.6);
   });
 
-  it("Non-book layers receive a uniform palette (no repetition)", async () => {
+  it("Non-book layers have 3 distinct palette colors", async () => {
     const hash = await Hash.from("essays-uniform");
     const layers = composeLayers(hash, { slug: "x", primaryTag: "essays", titleLength: 40, publishedAtMs: Date.now() });
     for (const layer of layers) {
-      expect(new Set(layer.palette).size).toBe(layer.palette.length);
+      expect(layer.palette.length).toBe(3);
+      expect(new Set(layer.palette).size).toBe(3);
     }
   });
 });
