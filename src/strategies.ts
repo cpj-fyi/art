@@ -160,7 +160,8 @@ function field({ hash, canvas, mark, palette, cellSize }: StrategyArgs): MarkIns
 
 function chaotic({ hash, canvas, mark, palette, density, cellSize }: StrategyArgs): MarkInstance[] {
   // Use a sub-step that doesn't divide cellSize evenly, so x%cellSize varies.
-  const subStep = Math.max(3, Math.floor(cellSize / 3));
+  // Minimum 5 to keep worst-case bit consumption within the Hash pre-extension budget.
+  const subStep = Math.max(5, Math.floor(cellSize / 3));
   const cols = Math.floor(canvas.width / subStep);
   const rows = Math.floor(canvas.height / subStep);
   const out: MarkInstance[] = [];
