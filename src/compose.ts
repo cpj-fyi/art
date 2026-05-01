@@ -178,18 +178,19 @@ export function composePanels(hash: Hash, meta: PostMetadata, palette: readonly 
   const titleClamp = Math.max(0, Math.min(2, Math.floor((meta.titleLength - 20) / 30)));
   const panelCount = 3 + titleClamp; // 3..5
   const rects = panelRects(hash, CANVAS, panelCount);
+  const radarFactor = meta.primaryTag === "radar" ? 0.75 : 1;
 
   return rects.map((r) => {
     const strategy = hash.pick(PANEL_STRATEGIES);
     const markPool = STRATEGY_MARK_BIAS[strategy] ?? ALL_MARKS;
     const mark = hash.pick(markPool);
     const layerColors = pickDistinctN(hash, palette, 3);
-    const density =
-      strategy === "field"                  ? 1 :
-      RHYTHMIC_STRATEGIES.has(strategy)     ? 0.65 + hash.float() * 0.30 :  // 0.65–0.95: fill the rhythm
-      strategy === "gravity"                ? 0.35 + hash.float() * 0.35 :  // 0.35–0.70: visible piles
-      strategy === "chaotic"                ? 0.06 + hash.float() * 0.10 :  // 0.06–0.16: keep bit budget reasonable
-                                              0.08 + hash.float() * 0.18;   // scatter / clusters
+    const density = strategy === "field"
+      ? 1
+      : (RHYTHMIC_STRATEGIES.has(strategy)     ? 0.65 + hash.float() * 0.30 :  // 0.65–0.95 → 0.49–0.71 for radar
+         strategy === "gravity"                ? 0.35 + hash.float() * 0.35 :  // 0.35–0.70 → 0.26–0.53 for radar
+         strategy === "chaotic"                ? 0.06 + hash.float() * 0.10 :  // 0.06–0.16 → 0.05–0.12 for radar
+                                                 0.08 + hash.float() * 0.18) * radarFactor;  // scatter / clusters
     const cellSize = [10, 12, 15, 18][hash.next(2) % 4]!;
     return {
       x: r.x, y: r.y, width: r.width, height: r.height,
