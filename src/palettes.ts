@@ -1,4 +1,5 @@
 import type { Mood, Palette } from "./types";
+import type { Hash } from "./hash";
 
 const SECTION_ARC = [
   { tag: "start-end", color: "#222222" },
@@ -11,6 +12,8 @@ const SECTION_ARC = [
 ] as const;
 
 const SECTION_TAGS = SECTION_ARC.map((s) => s.tag);
+
+const ESSAYS_BGS = ["#221552", "#E5601F"] as const;
 
 export const MOODS: Record<Mood, Palette> = {
   book: {
@@ -25,11 +28,8 @@ export const MOODS: Record<Mood, Palette> = {
     colors: ["#00FF88", "#00CCFF", "#FF00C8", "#FFE600", "#FFFFFF", "#666666"],
   },
   essays: {
-    bg: "#F6EFDD",
-    colors: [
-      "#2C5489", "#DC5440", "#2D6B4F", "#E5B055",
-      "#D89099", "#B8D2DE", "#C4A87C", "#2A2A2A",
-    ],
+    bg: "#E5601F",  // legacy field — selectPalette overrides this for essays. Kept for paletteFor compatibility.
+    colors: ["#221552", "#E5601F", "#FFFFFF"],
   },
 };
 
@@ -83,4 +83,35 @@ export function weightedPaletteFor(tag: string | null): readonly string[] {
   weighted.push("#999999");
   // intentionally do NOT add #222222 separately — already in arc as start-end
   return weighted;
+}
+
+export type ResolvedPalette = {
+  bg: string;
+  colors: readonly string[];
+};
+
+/**
+ * Picks the per-post bg + foreground colors deterministically from the hash.
+ * - Book: static bg (#F8F8F8); colors = section-weighted palette
+ * - Radar: static bg (#1A1A1A); colors = uniform 6-color neon
+ * - Essays: bg picked from {eggplant, persimmon}; colors = white + the other one
+ *
+ * Consumes hash bits — call before any other layer-composition decisions
+ * so the bit stream stays deterministic.
+ */
+export function selectPalette(tag: string | null, hash: Hash): ResolvedPalette {
+  const mood = moodFor(tag);
+  if (mood === "essays") {
+    const bg = hash.pick(ESSAYS_BGS);
+    const fg: string[] = ["#FFFFFF"];
+    for (const c of ESSAYS_BGS) {
+      if (c !== bg) fg.push(c);
+    }
+    return { bg, colors: fg };
+  }
+  if (mood === "radar") {
+    return { bg: MOODS.radar.bg, colors: MOODS.radar.colors };
+  }
+  // Book
+  return { bg: MOODS.book.bg, colors: weightedPaletteFor(tag) };
 }

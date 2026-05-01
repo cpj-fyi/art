@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { paletteFor, weightedPaletteFor, MOODS } from "../src/palettes";
+import { paletteFor, weightedPaletteFor, selectPalette, MOODS } from "../src/palettes";
 import { Hash } from "../src/hash";
 
 describe("palettes", () => {
@@ -17,8 +17,8 @@ describe("palettes", () => {
     expect(paletteFor("radar").bg).toBe("#1A1A1A");
   });
 
-  it("essays mood: paper bg", () => {
-    expect(paletteFor("essays").bg).toBe("#F6EFDD");
+  it("essays mood: persimmon bg (legacy paletteFor field)", () => {
+    expect(paletteFor("essays").bg).toBe("#E5601F");
   });
 
   it("default to book for unknown tag", () => {
@@ -63,6 +63,12 @@ describe("palettes", () => {
   it("MOODS exposes all three", () => {
     expect(MOODS.book.bg).toBe("#F8F8F8");
     expect(MOODS.radar.bg).toBe("#1A1A1A");
-    expect(MOODS.essays.bg).toBe("#F6EFDD");
+    expect(MOODS.essays.bg).toBe("#E5601F");
+  });
+
+  it("essays mood: bg is eggplant or persimmon", async () => {
+    const h = await Hash.from("essays-bg-test");
+    const { bg } = selectPalette("essays", h);
+    expect(["#221552", "#E5601F"]).toContain(bg);
   });
 });

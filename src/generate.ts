@@ -2,14 +2,14 @@ import { Hash } from "./hash";
 import { composeLayers } from "./compose";
 import { runStrategy } from "./strategies";
 import { renderSvg } from "./render";
-import { paletteFor } from "./palettes";
+import { selectPalette } from "./palettes";
 import type { PostMetadata } from "./types";
 import { CANVAS } from "./types";
 
 export async function generateSvg(meta: PostMetadata): Promise<string> {
   const hash = await Hash.from(meta.slug);
-  const palette = paletteFor(meta.primaryTag);
-  const layers = composeLayers(hash, meta);
+  const { bg, colors } = selectPalette(meta.primaryTag, hash);
+  const layers = composeLayers(hash, meta, colors);
   const marks = layers.flatMap((l) =>
     runStrategy(l.strategy, {
       hash,
@@ -20,5 +20,5 @@ export async function generateSvg(meta: PostMetadata): Promise<string> {
       cellSize: l.cellSize,
     })
   );
-  return renderSvg({ bg: palette.bg, marks });
+  return renderSvg({ bg, marks });
 }

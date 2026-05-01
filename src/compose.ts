@@ -1,5 +1,5 @@
 import type { Hash } from "./hash";
-import { weightedPaletteFor, moodFor } from "./palettes";
+import { moodFor } from "./palettes";
 import type { Layer, MarkKey, PostMetadata, StrategyKey } from "./types";
 
 const BASE_STRATEGIES: StrategyKey[] = ["field", "grid", "strata"];
@@ -17,18 +17,16 @@ const STRATEGY_MARK_BIAS: Partial<Record<StrategyKey, MarkKey[]>> = {
   chaotic:  ["pixel", "diagonal"],
 };
 
-export function composeLayers(hash: Hash, meta: PostMetadata): Layer[] {
+export function composeLayers(hash: Hash, meta: PostMetadata, palette: readonly string[]): Layer[] {
   const mood = moodFor(meta.primaryTag);
-  const weighted = weightedPaletteFor(meta.primaryTag);
-
   const layerCount = pickLayerCount(hash, meta, mood);
 
-  const base = pickLayer(hash, "base", BASE_STRATEGIES, meta, weighted);
-  const figure = pickLayer(hash, "figure", FIGURE_STRATEGIES, meta, weighted);
+  const base = pickLayer(hash, "base", BASE_STRATEGIES, meta, palette);
+  const figure = pickLayer(hash, "figure", FIGURE_STRATEGIES, meta, palette);
 
   if (layerCount === 2) return [base, figure];
 
-  const accent = pickLayer(hash, "accent", ACCENT_STRATEGIES, meta, weighted);
+  const accent = pickLayer(hash, "accent", ACCENT_STRATEGIES, meta, palette);
   return [base, figure, accent];
 }
 

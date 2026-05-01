@@ -13,9 +13,11 @@ describe("generateSvg", () => {
     expect(svg).toContain('fill="#1A1A1A"');
   });
 
-  it("returns a complete SVG for an Essays post", async () => {
+  it("returns a complete SVG for an Essays post (bg is eggplant or persimmon)", async () => {
     const svg = await generateSvg({ slug: "test-essays", primaryTag: "essays", titleLength: 60, publishedAtMs: Date.now() });
-    expect(svg).toContain('fill="#F6EFDD"');
+    const hasEggplantBg = svg.includes('fill="#221552"');
+    const hasPersimmonBg = svg.includes('fill="#E5601F"');
+    expect(hasEggplantBg || hasPersimmonBg).toBe(true);
   });
 
   it("is deterministic for the same metadata", async () => {

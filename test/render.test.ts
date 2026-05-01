@@ -3,12 +3,13 @@ import { renderSvg } from "../src/render";
 import { Hash } from "../src/hash";
 import { composeLayers } from "../src/compose";
 import { runStrategy } from "../src/strategies";
+import { weightedPaletteFor } from "../src/palettes";
 import { CANVAS } from "../src/types";
 
 describe("renderSvg", () => {
   it("wraps in valid <svg> with viewBox 0 0 1200 630", async () => {
     const hash = await Hash.from("render");
-    const layers = composeLayers(hash, { slug: "render", primaryTag: "essays", titleLength: 40, publishedAtMs: Date.now() });
+    const layers = composeLayers(hash, { slug: "render", primaryTag: "essays", titleLength: 40, publishedAtMs: Date.now() }, ["#221552", "#E5601F", "#FFFFFF"]);
     const marks = layers.flatMap((l) => runStrategy(l.strategy, { hash, canvas: CANVAS, mark: l.mark, palette: l.palette, density: l.density, cellSize: l.cellSize }));
     const svg = renderSvg({ bg: "#F6EFDD", marks });
     expect(svg).toMatch(/^<svg\b/);
@@ -33,7 +34,7 @@ describe("renderSvg", () => {
   it("output is well-formed for a typical post", async () => {
     const hash = await Hash.from("well-formed");
     const meta = { slug: "well-formed", primaryTag: "foundations", titleLength: 50, publishedAtMs: Date.now() };
-    const layers = composeLayers(hash, meta);
+    const layers = composeLayers(hash, meta, weightedPaletteFor(meta.primaryTag));
     const marks = layers.flatMap((l) => runStrategy(l.strategy, { hash, canvas: CANVAS, mark: l.mark, palette: l.palette, density: l.density, cellSize: l.cellSize }));
     const svg = renderSvg({ bg: "#F8F8F8", marks });
     const opens = (svg.match(/<svg\b/g) || []).length;
