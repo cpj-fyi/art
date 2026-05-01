@@ -110,7 +110,20 @@ const PANEL_MARGIN = 24;
 const PANEL_GAP = 16;
 const PANEL_MIN_W = 200;
 const PANEL_MIN_H = 150;
-const PANEL_STRATEGIES: StrategyKey[] = ["grid", "strata", "columns", "quilt", "checker", "clusters", "field", "scatter"];
+const PANEL_STRATEGIES: StrategyKey[] = [
+  // rhythmic strategies — 3 copies each, dominant
+  "grid", "grid", "grid",
+  "quilt", "quilt", "quilt",
+  "checker", "checker", "checker",
+  "strata", "strata",
+  "columns", "columns",
+  "field", "field",
+  // sparse strategies — 1 copy each, occasional
+  "scatter",
+  "clusters",
+];
+
+const RHYTHMIC_STRATEGIES: ReadonlySet<StrategyKey> = new Set(["grid", "quilt", "checker", "strata", "columns"]);
 
 function largestRectIndex(rects: Rect[]): number {
   let bestIdx = 0;
@@ -169,7 +182,10 @@ export function composePanels(hash: Hash, meta: PostMetadata, palette: readonly 
     const markPool = STRATEGY_MARK_BIAS[strategy] ?? ALL_MARKS;
     const mark = hash.pick(markPool);
     const layerColors = pickDistinctN(hash, palette, 3);
-    const density = strategy === "field" ? 1 : (0.15 + hash.float() * 0.30);
+    const density =
+      strategy === "field"                  ? 1 :
+      RHYTHMIC_STRATEGIES.has(strategy)     ? 0.65 + hash.float() * 0.30 :  // 0.65–0.95: fills the rhythm
+                                              0.08 + hash.float() * 0.18;   // 0.08–0.26: sparse for scatter/clusters
     const cellSize = [10, 12, 15, 18][hash.next(2) % 4]!;
     return {
       x: r.x, y: r.y, width: r.width, height: r.height,
