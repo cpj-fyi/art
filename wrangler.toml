@@ -8,10 +8,9 @@ compatibility_flags = ["nodejs_compat"]
 #   { pattern = "art.cpj.fyi/*", custom_domain = true }
 # ]
 
-# KV namespaces — created via `wrangler kv:namespace create ART_CACHE`
-# [[kv_namespaces]]
-# binding = "ART_CACHE"
-# id = "<fill in after creating>"
+[[kv_namespaces]]
+binding = "ART_CACHE"
+id = "76c3f335474449a1bb83298a427c79d4"
 
 [vars]
 GHOST_API_URL = "https://cpj.fyi/ghost/api/content/posts"
