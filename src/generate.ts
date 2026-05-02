@@ -39,7 +39,7 @@ function translateAndClip(m: MarkInstance, p: Panel): MarkInstance | null {
 
 export async function generate(meta: PostMetadata): Promise<GenerateResult> {
   const hash = await Hash.from(meta.slug);
-  const { bg, colors } = selectPalette(meta.primaryTag, hash);
+  const { bg, colors } = selectPalette(meta.primaryTag, hash, meta.publishedAtMs);
   const panels = composePanels(hash, meta, colors);
 
   const marks: MarkInstance[] = panels.flatMap((p) => {
