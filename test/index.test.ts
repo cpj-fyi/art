@@ -47,7 +47,7 @@ describe("worker", () => {
     const resp = await worker.fetch(req, env, ctx);
     expect(resp.status).toBe(200);
     const body = await resp.text();
-    expect(body).toContain('fill="#F8F8F8"');
+    expect(body).toContain('fill="#F6EFDD"');
   });
 
   it("rejects non-svg paths with 404", async () => {

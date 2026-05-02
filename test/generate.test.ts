@@ -5,7 +5,7 @@ describe("generateSvg", () => {
   it("returns a complete SVG for a Book post", async () => {
     const svg = await generateSvg({ slug: "test-foundations", primaryTag: "foundations", titleLength: 42, publishedAtMs: Date.now() });
     expect(svg).toMatch(/^<svg\b/);
-    expect(svg).toContain('fill="#F8F8F8"');
+    expect(svg).toContain('fill="#F6EFDD"');
   });
 
   it("returns a complete SVG for a Radar post", async () => {
@@ -13,9 +13,9 @@ describe("generateSvg", () => {
     expect(svg).toContain('fill="#1A1A1A"');
   });
 
-  it("returns a complete SVG for an Essays post (bg is #F8F8F8)", async () => {
+  it("returns a complete SVG for an Essays post (bg is #F6EFDD)", async () => {
     const svg = await generateSvg({ slug: "test-essays", primaryTag: "essays", titleLength: 60, publishedAtMs: Date.now() });
-    expect(svg).toContain('fill="#F8F8F8"');
+    expect(svg).toContain('fill="#F6EFDD"');
   });
 
   it("is deterministic for the same metadata", async () => {

@@ -4,12 +4,12 @@ import { Hash } from "../src/hash";
 
 describe("palettes", () => {
   it("book mood for hidden-patterns tag", () => {
-    expect(paletteFor("hidden-patterns").bg).toBe("#F8F8F8");
+    expect(paletteFor("hidden-patterns").bg).toBe("#F6EFDD");
   });
 
   it("book mood for any of the 7 section tags", () => {
     for (const tag of ["start-end", "foundations", "structuring", "direction", "practice", "learning", "space"]) {
-      expect(paletteFor(tag).bg).toBe("#F8F8F8");
+      expect(paletteFor(tag).bg).toBe("#F6EFDD");
     }
   });
 
@@ -17,13 +17,13 @@ describe("palettes", () => {
     expect(paletteFor("radar").bg).toBe("#1A1A1A");
   });
 
-  it("essays mood: bg is #F8F8F8 (HP)", () => {
-    expect(paletteFor("essays").bg).toBe("#F8F8F8");
+  it("essays mood: bg is #F6EFDD (HP)", () => {
+    expect(paletteFor("essays").bg).toBe("#F6EFDD");
   });
 
   it("default to book for unknown tag", () => {
-    expect(paletteFor(null).bg).toBe("#F8F8F8");
-    expect(paletteFor("five-things").bg).toBe("#F8F8F8");
+    expect(paletteFor(null).bg).toBe("#F6EFDD");
+    expect(paletteFor("five-things").bg).toBe("#F6EFDD");
   });
 
   it("Book palette includes the section arc", () => {
@@ -61,14 +61,14 @@ describe("palettes", () => {
   });
 
   it("MOODS exposes all three", () => {
-    expect(MOODS.book.bg).toBe("#F8F8F8");
+    expect(MOODS.book.bg).toBe("#F6EFDD");
     expect(MOODS.radar.bg).toBe("#1A1A1A");
-    expect(MOODS.essays.bg).toBe("#F8F8F8");
+    expect(MOODS.essays.bg).toBe("#F6EFDD");
   });
 
-  it("essays mood: bg is #F8F8F8 (HP)", async () => {
+  it("essays mood: bg is #F6EFDD (HP)", async () => {
     const h = await Hash.from("essays-bg-test");
     const { bg } = selectPalette("essays", h);
-    expect(bg).toBe("#F8F8F8");
+    expect(bg).toBe("#F6EFDD");
   });
 });

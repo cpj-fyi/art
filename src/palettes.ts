@@ -15,7 +15,7 @@ const SECTION_TAGS = SECTION_ARC.map((s) => s.tag);
 
 export const MOODS: Record<Mood, Palette> = {
   book: {
-    bg: "#F8F8F8",
+    bg: "#F6EFDD",
     colors: [
       "#222222", "#FF3252", "#E9306B", "#D83586",
       "#BD31BF", "#9F36CE", "#8438F2", "#999999",
@@ -26,7 +26,7 @@ export const MOODS: Record<Mood, Palette> = {
     colors: ["#00FF88", "#00CCFF", "#FF00C8", "#FFE600", "#FFFFFF", "#666666"],
   },
   essays: {
-    bg: "#F8F8F8",
+    bg: "#F6EFDD",
     colors: [
       "#222222", "#FF3252", "#E9306B", "#D83586",
       "#BD31BF", "#9F36CE", "#8438F2", "#999999",
@@ -93,9 +93,9 @@ export type ResolvedPalette = {
 
 /**
  * Picks the per-post bg + foreground colors deterministically from the hash.
- * - Book: static bg (#F8F8F8); colors = section-weighted palette
+ * - Book: static bg (#F6EFDD); colors = section-weighted palette
  * - Radar: static bg (#1A1A1A); colors = uniform 6-color neon
- * - Essays: static bg (#F8F8F8); colors = HP 8-color palette (uniform pick, no section bias)
+ * - Essays: static bg (#F6EFDD); colors = HP 8-color palette (uniform pick, no section bias)
  *
  * Consumes hash bits — call before any other layer-composition decisions
  * so the bit stream stays deterministic.
