@@ -63,6 +63,6 @@ describe("fetchPostMetadata", () => {
     const url = (fetchSpy.mock.calls[0]![0] as string);
     expect(url).toContain("/slug/x");
     expect(url).toContain("key=abcd1234");
-    expect(url).toContain("fields=slug%2Ctitle%2Cpublished_at");
+    expect(url).toContain("include=tags");
   });
 });
