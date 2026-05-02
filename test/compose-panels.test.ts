@@ -6,12 +6,12 @@ import { CANVAS } from "../src/types";
 const PALETTE = ["#222", "#FF3252", "#999", "#E9306B", "#8438F2"];
 
 describe("composePanels", () => {
-  it("returns 3 to 5 panels", async () => {
+  it("returns 2 to 4 panels", async () => {
     for (const slug of ["a", "b", "c", "d", "e", "f"]) {
       const hash = await Hash.from(slug);
       const panels = composePanels(hash, { slug, primaryTag: null, titleLength: 40, publishedAtMs: Date.now() }, PALETTE);
-      expect(panels.length).toBeGreaterThanOrEqual(3);
-      expect(panels.length).toBeLessThanOrEqual(5);
+      expect(panels.length).toBeGreaterThanOrEqual(2);
+      expect(panels.length).toBeLessThanOrEqual(4);
     }
   });
 
@@ -80,5 +80,21 @@ describe("composePanels", () => {
     }
     expect(seen.has("gravity")).toBe(true);
     expect(seen.has("chaotic")).toBe(true);
+  });
+
+  it("some panels have opacity < 1", async () => {
+    let opaque = 0;
+    let translucent = 0;
+    for (let i = 0; i < 50; i++) {
+      const hash = await Hash.from(`opacity-${i}`);
+      const panels = composePanels(hash, { slug: `s${i}`, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, ["#FF3252", "#222", "#999"]);
+      for (const p of panels) {
+        if (p.opacity < 1) translucent++;
+        else opaque++;
+      }
+    }
+    // expect ~30% translucent — accept any non-zero
+    expect(translucent).toBeGreaterThan(0);
+    expect(opaque).toBeGreaterThan(translucent);
   });
 });

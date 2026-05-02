@@ -58,6 +58,12 @@ export type Panel = {
   palette: readonly string[];
   density: number;
   cellSize: number;
+  opacity: number;  // 0..1; 1 = fully opaque
+};
+
+export type MarkGroup = {
+  opacity: number;  // 1 if no group wrapping needed
+  marks: MarkInstance[];
 };
 
 export type PostMetadata = {
