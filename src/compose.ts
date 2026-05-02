@@ -193,8 +193,6 @@ export function composePanels(hash: Hash, meta: PostMetadata, palette: readonly 
                                               0.08 + hash.float() * 0.18;
     const density = strategy === "field" ? 1 : baseDensity * radarFactor;
     const cellSize = [18, 24, 30, 36][hash.next(2) % 4]!;
-    // ~30% of panels render translucent
-    const opacity = hash.float() < 0.30 ? 0.5 + hash.float() * 0.25 : 1;
 
     // ~40% of panels get a secondary pass with a different strategy + contrasting mark
     let secondary: Panel["secondary"] | undefined;
@@ -228,7 +226,7 @@ export function composePanels(hash: Hash, meta: PostMetadata, palette: readonly 
 
     return {
       x: r.x, y: r.y, width: r.width, height: r.height,
-      strategy, mark, palette: layerColors, density, cellSize, opacity,
+      strategy, mark, palette: layerColors, density, cellSize,
       secondary,
     };
   });

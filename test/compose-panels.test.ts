@@ -82,22 +82,6 @@ describe("composePanels", () => {
     expect(seen.has("chaotic")).toBe(true);
   });
 
-  it("some panels have opacity < 1", async () => {
-    let opaque = 0;
-    let translucent = 0;
-    for (let i = 0; i < 50; i++) {
-      const hash = await Hash.from(`opacity-${i}`);
-      const panels = composePanels(hash, { slug: `s${i}`, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, ["#FF3252", "#222", "#999"]);
-      for (const p of panels) {
-        if (p.opacity < 1) translucent++;
-        else opaque++;
-      }
-    }
-    // expect ~30% translucent — accept any non-zero
-    expect(translucent).toBeGreaterThan(0);
-    expect(opaque).toBeGreaterThan(translucent);
-  });
-
   it("some panels have a secondary pass", async () => {
     let withSec = 0;
     let total = 0;
