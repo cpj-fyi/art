@@ -8,9 +8,9 @@ describe("generateSvg", () => {
     expect(svg).toContain('fill="#F6EFDD"');
   });
 
-  it("returns a complete SVG for a Radar post", async () => {
+  it("returns a complete SVG for a Radar post (now uses cream/arc like book)", async () => {
     const svg = await generateSvg({ slug: "test-radar", primaryTag: "radar", titleLength: 30, publishedAtMs: Date.now() });
-    expect(svg).toContain('fill="#1A1A1A"');
+    expect(svg).toContain('fill="#F6EFDD"');
   });
 
   it("returns a complete SVG for an Essays post (bg is #F6EFDD)", async () => {
