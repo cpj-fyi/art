@@ -49,4 +49,20 @@ describe("Hash", () => {
     const x = h.pick(arr);
     expect(arr).toContain(x);
   });
+
+  it("seed() returns 8-char hex of first 4 bytes", async () => {
+    const h = await Hash.from("test");
+    const s = h.seed();
+    expect(s).toMatch(/^[0-9a-f]{8}$/);
+    // SHA-256 of "test" begins with 9f86d081... so seed should be "9f86d081"
+    expect(s).toBe("9f86d081");
+  });
+
+  it("seed() does not consume bits (subsequent next() calls return same value)", async () => {
+    const a = await Hash.from("seed-test");
+    const b = await Hash.from("seed-test");
+    a.seed();
+    // a's bit cursor should be unchanged; first next() call returns same as b's first next()
+    expect(a.next(16)).toBe(b.next(16));
+  });
 });

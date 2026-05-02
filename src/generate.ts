@@ -8,6 +8,7 @@ import { RENDERER_VERSION } from "./version";
 
 export type ArtMetadata = {
   slug: string;
+  seed: string;          // 8-char hex from sha256(slug)
   primaryTag: string | null;
   mood: Mood;
   bg: string;
@@ -62,6 +63,7 @@ export async function generate(meta: PostMetadata): Promise<GenerateResult> {
 
   const metadata: ArtMetadata = {
     slug: meta.slug,
+    seed: hash.seed(),
     primaryTag: meta.primaryTag,
     mood: moodFor(meta.primaryTag),
     bg,

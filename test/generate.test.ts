@@ -35,6 +35,7 @@ describe("generateSvg", () => {
     const result = await generate({ slug: "metadata-test", primaryTag: "foundations", titleLength: 40, publishedAtMs: Date.now() });
     expect(result.svg).toMatch(/^<svg\b/);
     expect(result.metadata.slug).toBe("metadata-test");
+    expect(result.metadata.seed).toMatch(/^[0-9a-f]{8}$/);
     expect(result.metadata.mood).toBe("book");
     expect(result.metadata.panels.length).toBeGreaterThan(0);
     expect(result.metadata.rendererVersion).toBeGreaterThan(0);

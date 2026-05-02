@@ -52,6 +52,18 @@ export class Hash {
     return arr[this.next(16) % arr.length]!;
   }
 
+  /**
+   * Returns the first 4 bytes of the underlying digest as an 8-char hex string.
+   * Used as a stable, short, hash-like identifier for display purposes.
+   */
+  seed(): string {
+    let out = "";
+    for (let i = 0; i < 4; i++) {
+      out += this.bytes[i]!.toString(16).padStart(2, "0");
+    }
+    return out;
+  }
+
   private ensureBits(needed: number): void {
     const totalBits = this.bytes.length * 8;
     if (this.bitOffset + needed <= totalBits) return;
