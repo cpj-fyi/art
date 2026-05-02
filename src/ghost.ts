@@ -10,6 +10,7 @@ type GhostResponse = {
     slug: string;
     title: string;
     primary_tag?: { slug: string } | null;
+    tags?: Array<{ slug: string }>;
     published_at: string;
   }>;
 };
@@ -27,9 +28,17 @@ export async function fetchPostMetadata(slug: string, env: GhostEnv): Promise<Po
   const data = (await resp.json()) as GhostResponse;
   const post = data.posts?.[0];
   if (!post) return null;
+
+  // Ghost's Content API doesn't return `primary_tag` when `fields` is set
+  // without explicitly listing it. Fall back to deriving it from the tags
+  // array (first non-internal tag — internal tags start with '#').
+  const fromPrimary = post.primary_tag?.slug;
+  const fromTags = post.tags?.find((t) => !t.slug.startsWith("#"))?.slug;
+  const primaryTag = fromPrimary ?? fromTags ?? null;
+
   return {
     slug: post.slug,
-    primaryTag: post.primary_tag?.slug ?? null,
+    primaryTag,
     titleLength: post.title.length,
     publishedAtMs: Date.parse(post.published_at),
   };
