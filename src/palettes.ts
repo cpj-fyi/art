@@ -91,43 +91,30 @@ export type ResolvedPalette = {
   colors: readonly string[];
 };
 
-// Radar visual evolution: posts published before this date use the Book-mood
-// palette (cream + arc, the "classic" look); posts on or after use the dark
-// radar palette but with coral (#FF3252) replacing the neon green (#00FF88).
-const RADAR_CORAL_CUTOFF_MS = Date.parse("2026-02-03T00:00:00Z");
-
-const RADAR_CORAL_COLORS: readonly string[] = [
-  "#FF3252", "#00CCFF", "#FF00C8", "#FFE600", "#FFFFFF", "#666666",
-];
-
 /**
  * Picks the per-post bg + foreground colors deterministically from the hash.
  *
  * - Book: static bg (#F6EFDD); colors = section-weighted palette
- * - Radar pre-2026-02-03: rendered as Book-mood (cream + arc) — classic look
- * - Radar from 2026-02-03 on: dark bg (#1A1A1A); colors = coral-led neon
+ * - Radar: static bg (#F6EFDD); colors = uniform arc palette (the classic look)
  * - Essays: static bg (#F6EFDD); colors = HP 8-color palette (uniform pick)
  *
- * Consumes hash bits for picks (Essays/Book — radar branch is deterministic from
- * tag+date alone). Call before any other layer-composition decisions so the bit
- * stream stays deterministic.
+ * (Radar previously used a dark bg with neon accents; now unified with the
+ * cream/arc look.)
+ *
+ * The publishedAtMs param is accepted for API compatibility but currently
+ * unused; future date-aware variants can branch on it.
  */
 export function selectPalette(
   tag: string | null,
-  hash: Hash,
-  publishedAtMs: number = Date.now(),
+  _hash: Hash,
+  _publishedAtMs: number = Date.now(),
 ): ResolvedPalette {
   const mood = moodFor(tag);
   if (mood === "essays") {
     return { bg: MOODS.essays.bg, colors: MOODS.essays.colors };
   }
   if (mood === "radar") {
-    if (publishedAtMs < RADAR_CORAL_CUTOFF_MS) {
-      // Classic radar look: book-mood palette (cream + uniform arc colors)
-      return { bg: MOODS.book.bg, colors: MOODS.book.colors };
-    }
-    // New radar look: dark bg, coral-led neon palette
-    return { bg: MOODS.radar.bg, colors: RADAR_CORAL_COLORS };
+    return { bg: MOODS.book.bg, colors: MOODS.book.colors };
   }
   // Book
   return { bg: MOODS.book.bg, colors: weightedPaletteFor(tag) };
