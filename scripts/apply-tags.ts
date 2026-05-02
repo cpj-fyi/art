@@ -143,9 +143,16 @@ async function main() {
     if (!post) { notFound++; continue; }
 
     const oldTags: string[] = (post.tags ?? []).map((t: any) => t.slug);
-    const protectedKept = oldTags.filter((t) => PROTECTED.has(t));
+    // Smart protected-tag handling:
+    // - If the suggestion CSV includes any protected tags, USE those (allows
+    //   reclassifying a post from radar → essays, or assigning content-type to
+    //   an untagged post).
+    // - If the suggestion has no protected tags, preserve the existing ones.
+    const oldProtected = oldTags.filter((t) => PROTECTED.has(t));
+    const newProtected = row.suggested.filter((t) => PROTECTED.has(t));
+    const protectedTags = newProtected.length > 0 ? newProtected : oldProtected;
     const newTopical = row.suggested.filter((t) => !PROTECTED.has(t));
-    const newTags = [...protectedKept, ...newTopical];
+    const newTags = [...protectedTags, ...newTopical];
 
     if (oldTags.join("|") === newTags.join("|")) { unchanged++; continue; }
 
