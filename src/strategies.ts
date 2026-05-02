@@ -12,16 +12,17 @@ export type StrategyArgs = {
 
 export function runStrategy(key: StrategyKey, args: StrategyArgs): MarkInstance[] {
   switch (key) {
-    case "grid":     return grid(args);
-    case "strata":   return strata(args);
-    case "columns":  return columns(args);
-    case "scatter":  return scatter(args);
-    case "quilt":    return quilt(args);
-    case "checker":  return checker(args);
-    case "clusters": return clusters(args);
-    case "field":    return field(args);
-    case "chaotic":  return chaotic(args);
-    case "gravity":  return gravity(args);
+    case "grid":      return grid(args);
+    case "strata":    return strata(args);
+    case "columns":   return columns(args);
+    case "scatter":   return scatter(args);
+    case "quilt":     return quilt(args);
+    case "checker":   return checker(args);
+    case "clusters":  return clusters(args);
+    case "field":     return field(args);
+    case "chaotic":   return chaotic(args);
+    case "gravity":   return gravity(args);
+    case "diagonals": return diagonals(args);
   }
 }
 
@@ -189,6 +190,33 @@ function gravity({ hash, canvas, mark, palette, density, cellSize }: StrategyArg
     for (let p = 0; p < pileCells; p++) {
       const y = canvas.height - cellSize * (p + 1);
       out.push({ mark, x: c * cellSize, y, color: hash.pick(palette), cellSize });
+    }
+  }
+  return out;
+}
+
+function diagonals({ hash, canvas, palette, density, cellSize }: StrategyArgs): MarkInstance[] {
+  // Lays rotated bars in a regular grid. Angle is consistent across the layer.
+  // Note: always uses "bar" regardless of incoming `mark` arg — bar is the right shape for a rotated stripe.
+  const angle = [30, 45, 60][hash.next(2) % 3]!;
+  const stride = 2 + (hash.next(2) % 3); // 2..4 cells
+  const cols = Math.floor(canvas.width / cellSize);
+  const rows = Math.floor(canvas.height / cellSize);
+  const length = 3 + (hash.next(2) % 3); // 3..5 cells long
+  const out: MarkInstance[] = [];
+  for (let r = 0; r < rows; r += stride) {
+    for (let c = 0; c < cols; c += stride) {
+      if (hash.float() < density) {
+        out.push({
+          mark: "bar",  // always bar regardless of incoming `mark` arg
+          x: c * cellSize,
+          y: r * cellSize,
+          color: hash.pick(palette),
+          cellSize,
+          length,
+          rotation: angle,
+        });
+      }
     }
   }
   return out;

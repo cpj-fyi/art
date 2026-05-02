@@ -18,7 +18,8 @@ export type StrategyKey =
   | "clusters"
   | "field"
   | "chaotic"
-  | "gravity";
+  | "gravity"
+  | "diagonals";
 
 export type Mood = "book" | "radar" | "essays";
 
@@ -38,6 +39,7 @@ export type MarkInstance = {
   // Optional mark-specific dims:
   length?: number;    // for bar / stripe / drip / block (in cells)
   height?: number;    // for stripe / block (in cells)
+  rotation?: number;  // degrees, applied around (x + width/2, y + height/2)
 };
 
 export type Layer = {
@@ -59,6 +61,13 @@ export type Panel = {
   density: number;
   cellSize: number;
   opacity: number;  // 0..1; 1 = fully opaque
+  secondary?: {
+    strategy: StrategyKey;
+    mark: MarkKey;
+    palette: readonly string[];
+    density: number;
+    cellSize: number;
+  };
 };
 
 export type MarkGroup = {

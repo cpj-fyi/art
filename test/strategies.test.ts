@@ -96,4 +96,15 @@ describe("strategies", () => {
     const ob = runStrategy("scatter", { hash: b, canvas: CANVAS, mark: "pixel", palette: PALETTE, density: 0.3, cellSize: 15 });
     expect(oa).toEqual(ob);
   });
+
+  it("diagonals: emits rotated bar marks", async () => {
+    const { hash, canvas } = await setup();
+    const out = runStrategy("diagonals", { hash, canvas, mark: "pixel", palette: PALETTE, density: 0.7, cellSize: 30 });
+    expect(out.length).toBeGreaterThan(0);
+    for (const m of out.slice(0, 10)) {
+      expect(m.mark).toBe("bar");
+      expect(m.rotation).toBeDefined();
+      expect([30, 45, 60]).toContain(m.rotation!);
+    }
+  });
 });

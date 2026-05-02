@@ -1,6 +1,27 @@
 import type { MarkInstance } from "./types";
 
 export function renderMark(m: MarkInstance): string {
+  const inner = renderMarkInner(m);
+  if (!m.rotation) return inner;
+  const [cx, cy] = markCenter(m);
+  return `<g transform="rotate(${m.rotation} ${cx} ${cy})">${inner}</g>`;
+}
+
+function markCenter(m: MarkInstance): [number, number] {
+  const c = m.cellSize;
+  switch (m.mark) {
+    case "bar":      return [m.x + c * (m.length ?? 4) / 2, m.y + c / 2];
+    case "stripe":   return [m.x + c / 2, m.y + c * (m.length ?? 4) / 2];
+    case "drip":     return [m.x + c / 2, m.y + c * (m.length ?? 4) / 2];
+    case "block":    return [m.x + c * (m.length ?? 2) / 2, m.y + c * (m.height ?? 2) / 2];
+    // pixel, plus, ring, diagonal: their bounding box centers are at (x + c/2, y + c/2)
+    // (plus and ring extend symmetrically; diagonal is a 4-cell box with center at (x + 2c, y + 2c))
+    case "diagonal": return [m.x + c * 2, m.y + c * 2];
+    default:         return [m.x + c / 2, m.y + c / 2];
+  }
+}
+
+function renderMarkInner(m: MarkInstance): string {
   switch (m.mark) {
     case "pixel":
       return rect(m.x, m.y, m.cellSize, m.cellSize, m.color);

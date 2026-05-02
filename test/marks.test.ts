@@ -57,4 +57,17 @@ describe("renderMark", () => {
     const svg = renderMark(at({ mark: "drip", length: 5 }));
     expect(svg).toBe(`<rect x="30" y="60" width="15" height="75" fill="#FF3252"/>`);
   });
+
+  it("applies rotation via <g transform>", () => {
+    const svg = renderMark(at({ mark: "bar", length: 4, rotation: 45 }));
+    expect(svg).toContain("<g transform=\"rotate(45 ");
+    expect(svg).toContain("</g>");
+  });
+
+  it("omits transform when rotation is 0 or undefined", () => {
+    const svgA = renderMark(at({ mark: "pixel" }));
+    const svgB = renderMark(at({ mark: "pixel", rotation: 0 }));
+    expect(svgA).not.toContain("<g");
+    expect(svgB).not.toContain("<g");
+  });
 });

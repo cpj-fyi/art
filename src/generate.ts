@@ -3,31 +3,44 @@ import { composePanels, pickDistinctN } from "./compose";
 import { runStrategy } from "./strategies";
 import { renderSvg } from "./render";
 import { selectPalette } from "./palettes";
-import type { MarkGroup, MarkKey, PostMetadata, StrategyKey } from "./types";
+import type { MarkGroup, MarkInstance, MarkKey, Panel, PostMetadata, StrategyKey } from "./types";
 import { CANVAS } from "./types";
+
+function translateAndClip(m: MarkInstance, p: Panel): MarkInstance | null {
+  const tx = m.x + p.x;
+  const ty = m.y + p.y;
+  if (tx < p.x || ty < p.y || tx >= p.x + p.width || ty >= p.y + p.height) return null;
+  return { ...m, x: tx, y: ty };
+}
 
 export async function generateSvg(meta: PostMetadata): Promise<string> {
   const hash = await Hash.from(meta.slug);
   const { bg, colors } = selectPalette(meta.primaryTag, hash);
   const panels = composePanels(hash, meta, colors);
 
-  const groups: MarkGroup[] = panels.map((p) => {
-    const panelMarks = runStrategy(p.strategy, {
+  const groups: MarkGroup[] = panels.flatMap((p) => {
+    const primaryMarks = runStrategy(p.strategy, {
       hash,
       canvas: { width: p.width, height: p.height },
       mark: p.mark,
       palette: p.palette,
       density: p.density,
       cellSize: p.cellSize,
-    });
-    // Translate panel-local marks to absolute canvas coords AND clip to panel bounds.
-    // Note: this simple origin-filter drops marks whose top-left is outside the panel;
-    // marks with origin inside but extending beyond may still poke out slightly (v1 acceptable).
-    const marks = panelMarks
-      .map((m) => ({ ...m, x: m.x + p.x, y: m.y + p.y }))
-      .filter((m) => m.x >= p.x && m.y >= p.y &&
-                     m.x < p.x + p.width && m.y < p.y + p.height);
-    return { opacity: p.opacity, marks };
+    }).map((m) => translateAndClip(m, p)).filter(Boolean) as MarkInstance[];
+
+    let secondaryMarks: MarkInstance[] = [];
+    if (p.secondary) {
+      secondaryMarks = runStrategy(p.secondary.strategy, {
+        hash,
+        canvas: { width: p.width, height: p.height },
+        mark: p.secondary.mark,
+        palette: p.secondary.palette,
+        density: p.secondary.density,
+        cellSize: p.secondary.cellSize,
+      }).map((m) => translateAndClip(m, p)).filter(Boolean) as MarkInstance[];
+    }
+
+    return [{ opacity: p.opacity, marks: [...primaryMarks, ...secondaryMarks] }];
   });
 
   // ~30% of posts get a unifying overlay across the panels

@@ -97,4 +97,33 @@ describe("composePanels", () => {
     expect(translucent).toBeGreaterThan(0);
     expect(opaque).toBeGreaterThan(translucent);
   });
+
+  it("some panels have a secondary pass", async () => {
+    let withSec = 0;
+    let total = 0;
+    for (let i = 0; i < 50; i++) {
+      const hash = await Hash.from(`secondary-${i}`);
+      const panels = composePanels(hash, { slug: `s${i}`, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, ["#FF3252", "#222", "#999", "#E9306B"]);
+      for (const p of panels) {
+        total++;
+        if (p.secondary) withSec++;
+      }
+    }
+    expect(withSec).toBeGreaterThan(0);
+    expect(withSec).toBeLessThan(total);
+  });
+
+  it("secondary uses a different strategy than primary when one is present", async () => {
+    // Loop until we find a panel with a secondary; check primary !== secondary strategy
+    for (let i = 0; i < 200; i++) {
+      const hash = await Hash.from(`diff-${i}`);
+      const panels = composePanels(hash, { slug: `s${i}`, primaryTag: null, titleLength: 50, publishedAtMs: 0 }, ["#FF3252", "#222", "#999"]);
+      const withSec = panels.find((p) => p.secondary);
+      if (withSec) {
+        expect(withSec.secondary!.strategy).not.toBe(withSec.strategy);
+        return;
+      }
+    }
+    throw new Error("Never found a panel with a secondary in 200 iterations");
+  });
 });

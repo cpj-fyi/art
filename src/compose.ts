@@ -10,12 +10,13 @@ const ACCENT_STRATEGIES: StrategyKey[] = ["scatter", "chaotic", "gravity"];
 const ALL_MARKS: MarkKey[] = ["pixel", "bar", "stripe", "plus", "ring", "diagonal", "block", "drip"];
 
 const STRATEGY_MARK_BIAS: Partial<Record<StrategyKey, MarkKey[]>> = {
-  field:    ["block"],
-  strata:   ["bar", "pixel"],
-  columns:  ["stripe", "pixel"],
-  quilt:    ["plus", "ring", "pixel"],
-  gravity:  ["pixel", "drip"],
-  chaotic:  ["pixel", "diagonal"],
+  field:      ["block"],
+  strata:     ["bar", "pixel"],
+  columns:    ["stripe", "pixel"],
+  quilt:      ["plus", "ring", "pixel"],
+  gravity:    ["pixel", "drip"],
+  chaotic:    ["pixel", "diagonal"],
+  diagonals:  ["bar"],  // decorative — diagonals already hardcodes bar internally, but marks the bias for clarity
 };
 
 export function composeLayers(hash: Hash, meta: PostMetadata, palette: readonly string[]): Layer[] {
@@ -115,6 +116,7 @@ const PANEL_STRATEGIES: StrategyKey[] = [
   "grid", "grid", "grid", "grid",
   "quilt", "quilt", "quilt", "quilt",
   "checker", "checker", "checker", "checker",
+  "diagonals", "diagonals", "diagonals",
   "strata", "strata", "strata",
   "columns", "columns", "columns",
   "field", "field",
@@ -123,7 +125,7 @@ const PANEL_STRATEGIES: StrategyKey[] = [
   "chaotic",
 ];
 
-const RHYTHMIC_STRATEGIES: ReadonlySet<StrategyKey> = new Set(["grid", "quilt", "checker", "strata", "columns"]);
+const RHYTHMIC_STRATEGIES: ReadonlySet<StrategyKey> = new Set(["grid", "quilt", "checker", "strata", "columns", "diagonals"]);
 
 function largestRectIndex(rects: Rect[]): number {
   let bestIdx = 0;
@@ -193,9 +195,41 @@ export function composePanels(hash: Hash, meta: PostMetadata, palette: readonly 
     const cellSize = [18, 24, 30, 36][hash.next(2) % 4]!;
     // ~30% of panels render translucent
     const opacity = hash.float() < 0.30 ? 0.5 + hash.float() * 0.25 : 1;
+
+    // ~40% of panels get a secondary pass with a different strategy + contrasting mark
+    let secondary: Panel["secondary"] | undefined;
+    if (hash.float() < 0.40) {
+      // Pick a secondary strategy from the rhythmic set (dominant marks)
+      // but a DIFFERENT one than the primary, and with a contrasting mark.
+      const secStrategyPool = PANEL_STRATEGIES.filter((s) => s !== strategy);
+      const secStrategy = hash.pick(secStrategyPool);
+      const secMarkPool = STRATEGY_MARK_BIAS[secStrategy] ?? ALL_MARKS;
+      const secMarkCandidates = secMarkPool.filter((mk) => mk !== mark);
+      const secMark = hash.pick(secMarkCandidates.length > 0 ? secMarkCandidates : secMarkPool);
+      const secColors = pickDistinctN(hash, palette, 2);
+      // Secondary always sparser than primary so it reads as accent on top
+      const secDensity = (
+        secStrategy === "field"                  ? 0.35 :  // field as secondary = a translucent-feeling fill
+        RHYTHMIC_STRATEGIES.has(secStrategy)     ? 0.20 + hash.float() * 0.20 :
+        secStrategy === "gravity"                ? 0.20 + hash.float() * 0.20 :
+        secStrategy === "chaotic"                ? 0.05 + hash.float() * 0.08 :
+                                                   0.10 + hash.float() * 0.10
+      ) * radarFactor;
+      // Larger cell size for secondary so it doesn't fight the primary
+      const secCellSize = Math.max(cellSize, [24, 30, 36][hash.next(2) % 3]!);
+      secondary = {
+        strategy: secStrategy,
+        mark: secMark,
+        palette: secColors,
+        density: secDensity,
+        cellSize: secCellSize,
+      };
+    }
+
     return {
       x: r.x, y: r.y, width: r.width, height: r.height,
       strategy, mark, palette: layerColors, density, cellSize, opacity,
+      secondary,
     };
   });
 }
