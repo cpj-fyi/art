@@ -63,4 +63,31 @@ describe("worker", () => {
     expect(resp.headers.get("cache-control")).toContain("immutable");
     expect(resp.headers.get("cache-control")).toContain("max-age=31536000");
   });
+
+  it("returns JSON metadata for .json endpoint", async () => {
+    env.ART_CACHE.get.mockResolvedValueOnce(null);
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({
+      posts: [{ slug: "j1", title: "J", primary_tag: { slug: "essays" }, published_at: "2025-01-01T00:00:00Z" }],
+    }), { status: 200 }));
+
+    const req = new Request("https://art.cpj.fyi/j1.json");
+    const resp = await worker.fetch(req, env, ctx);
+    expect(resp.status).toBe(200);
+    expect(resp.headers.get("content-type")).toContain("application/json");
+    const data = JSON.parse(await resp.text());
+    expect(data.slug).toBe("j1");
+    expect(data.mood).toBe("essays");
+    expect(Array.isArray(data.panels)).toBe(true);
+    expect(data.panels.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("returns CORS header on both endpoints", async () => {
+    env.ART_CACHE.get.mockResolvedValueOnce("<svg>x</svg>");
+    const resp1 = await worker.fetch(new Request("https://art.cpj.fyi/x.svg"), env, ctx);
+    expect(resp1.headers.get("access-control-allow-origin")).toBe("*");
+
+    env.ART_CACHE.get.mockResolvedValueOnce('{"slug":"y","mood":"book","bg":"#F6EFDD","panels":[]}');
+    const resp2 = await worker.fetch(new Request("https://art.cpj.fyi/y.json"), env, ctx);
+    expect(resp2.headers.get("access-control-allow-origin")).toBe("*");
+  });
 });

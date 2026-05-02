@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateSvg } from "../src/generate";
+import { generateSvg, generate } from "../src/generate";
 
 describe("generateSvg", () => {
   it("returns a complete SVG for a Book post", async () => {
@@ -29,5 +29,14 @@ describe("generateSvg", () => {
     const a = await generateSvg({ slug: "alpha", primaryTag: "essays", titleLength: 35, publishedAtMs: 1700000000000 });
     const b = await generateSvg({ slug: "beta",  primaryTag: "essays", titleLength: 35, publishedAtMs: 1700000000000 });
     expect(a).not.toBe(b);
+  });
+
+  it("generate returns both svg and metadata", async () => {
+    const result = await generate({ slug: "metadata-test", primaryTag: "foundations", titleLength: 40, publishedAtMs: Date.now() });
+    expect(result.svg).toMatch(/^<svg\b/);
+    expect(result.metadata.slug).toBe("metadata-test");
+    expect(result.metadata.mood).toBe("book");
+    expect(result.metadata.panels.length).toBeGreaterThan(0);
+    expect(result.metadata.rendererVersion).toBeGreaterThan(0);
   });
 });

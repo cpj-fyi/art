@@ -2,8 +2,32 @@ import { Hash } from "./hash";
 import { composePanels } from "./compose";
 import { runStrategy } from "./strategies";
 import { renderSvg } from "./render";
-import { selectPalette } from "./palettes";
-import type { MarkInstance, Panel, PostMetadata } from "./types";
+import { selectPalette, moodFor } from "./palettes";
+import type { MarkInstance, MarkKey, Mood, PostMetadata, StrategyKey, Panel } from "./types";
+import { RENDERER_VERSION } from "./version";
+
+export type ArtMetadata = {
+  slug: string;
+  primaryTag: string | null;
+  mood: Mood;
+  bg: string;
+  rendererVersion: number;
+  panels: Array<{
+    strategy: StrategyKey;
+    mark: MarkKey;
+    colors: readonly string[];
+    hasSecondary: boolean;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }>;
+};
+
+export type GenerateResult = {
+  svg: string;
+  metadata: ArtMetadata;
+};
 
 function translateAndClip(m: MarkInstance, p: Panel): MarkInstance | null {
   const tx = m.x + p.x;
@@ -12,35 +36,49 @@ function translateAndClip(m: MarkInstance, p: Panel): MarkInstance | null {
   return { ...m, x: tx, y: ty };
 }
 
-export async function generateSvg(meta: PostMetadata): Promise<string> {
+export async function generate(meta: PostMetadata): Promise<GenerateResult> {
   const hash = await Hash.from(meta.slug);
   const { bg, colors } = selectPalette(meta.primaryTag, hash);
   const panels = composePanels(hash, meta, colors);
 
   const marks: MarkInstance[] = panels.flatMap((p) => {
-    const primaryMarks = runStrategy(p.strategy, {
-      hash,
-      canvas: { width: p.width, height: p.height },
-      mark: p.mark,
-      palette: p.palette,
-      density: p.density,
-      cellSize: p.cellSize,
-    }).map((m) => translateAndClip(m, p)).filter(Boolean) as MarkInstance[];
+    const primary = runStrategy(p.strategy, {
+      hash, canvas: { width: p.width, height: p.height },
+      mark: p.mark, palette: p.palette, density: p.density, cellSize: p.cellSize,
+    }).map((m) => translateAndClip(m, p)).filter((m): m is MarkInstance => m !== null);
 
-    let secondaryMarks: MarkInstance[] = [];
-    if (p.secondary) {
-      secondaryMarks = runStrategy(p.secondary.strategy, {
-        hash,
-        canvas: { width: p.width, height: p.height },
-        mark: p.secondary.mark,
-        palette: p.secondary.palette,
-        density: p.secondary.density,
-        cellSize: p.secondary.cellSize,
-      }).map((m) => translateAndClip(m, p)).filter(Boolean) as MarkInstance[];
-    }
+    if (!p.secondary) return primary;
 
-    return [...primaryMarks, ...secondaryMarks];
+    const secondary = runStrategy(p.secondary.strategy, {
+      hash, canvas: { width: p.width, height: p.height },
+      mark: p.secondary.mark, palette: p.secondary.palette,
+      density: p.secondary.density, cellSize: p.secondary.cellSize,
+    }).map((m) => translateAndClip(m, p)).filter((m): m is MarkInstance => m !== null);
+
+    return [...primary, ...secondary];
   });
 
-  return renderSvg({ bg, marks });
+  const svg = renderSvg({ bg, marks });
+
+  const metadata: ArtMetadata = {
+    slug: meta.slug,
+    primaryTag: meta.primaryTag,
+    mood: moodFor(meta.primaryTag),
+    bg,
+    rendererVersion: RENDERER_VERSION,
+    panels: panels.map((p) => ({
+      strategy: p.strategy,
+      mark: p.mark,
+      colors: p.palette,
+      hasSecondary: !!p.secondary,
+      x: p.x, y: p.y, width: p.width, height: p.height,
+    })),
+  };
+
+  return { svg, metadata };
+}
+
+export async function generateSvg(meta: PostMetadata): Promise<string> {
+  const result = await generate(meta);
+  return result.svg;
 }
