@@ -16,9 +16,12 @@ type GhostResponse = {
 };
 
 export async function fetchPostMetadata(slug: string, env: GhostEnv): Promise<PostMetadata | null> {
+  // NOTE: we deliberately do NOT pass `fields` here — the Content API drops
+  // the `tags` include when fields is set to a restricted list, even if you
+  // include "tags". Asking for everything keeps the response small enough
+  // (~5 KB per post) and reliably includes the tags relation we need.
   const params = new URLSearchParams({
     key: env.GHOST_CONTENT_KEY,
-    fields: "slug,title,published_at",
     include: "tags",
   });
   const url = `${env.GHOST_API_URL}/slug/${encodeURIComponent(slug)}/?${params.toString()}`;
