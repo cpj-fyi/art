@@ -54,12 +54,15 @@ async function main() {
     const fields = noBody
       ? "id,slug,title,published_at,primary_tag"
       : "id,slug,title,published_at,primary_tag,plaintext";
-    const batch: any = await api.posts.browse({
+    const params: any = {
       limit: 100,
       page,
       fields,
       include: "tags",
-    });
+    };
+    // `plaintext` is a derived format — must be explicitly requested
+    if (!noBody) params.formats = "plaintext";
+    const batch: any = await api.posts.browse(params);
     for (const p of batch) {
       out.push({
         id: p.id,
