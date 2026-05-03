@@ -5,3 +5,10 @@ dist/
 .DS_Store
 *.log
 .superpowers/
+
+# Generated work artifacts (exports, backups, gallery)
+posts-export-*.json
+feature-images-backup-*.csv
+tag-changes-backup-*.csv
+tag-suggestions.csv
+gallery.html
