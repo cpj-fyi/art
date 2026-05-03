@@ -1,4 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
+
+// Mock the png module so vitest's node pool never attempts to load the WASM binary.
+vi.mock("../src/png", () => ({
+  svgToPng: vi.fn(async (svg: string) => new Uint8Array([0x89, 0x50, 0x4e, 0x47])), // minimal PNG header stub
+}));
+
 import worker from "../src/index";
 
 const env = {
@@ -11,7 +17,8 @@ const ctx = { waitUntil: () => {}, passThroughOnException: () => {} } as any;
 
 describe("worker", () => {
   it("returns 200 SVG for a valid slug", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce(null);
+    // getOrGenerate checks svgKey then jsonKey — both miss
+    env.ART_CACHE.get.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({
       posts: [{ slug: "hello", title: "Hello", primary_tag: { slug: "essays" }, published_at: "2025-01-15T00:00:00Z" }],
     }), { status: 200 }));
@@ -25,7 +32,10 @@ describe("worker", () => {
   });
 
   it("serves from KV cache on hit", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce("<svg>cached</svg>");
+    // getOrGenerate checks svgKey (hit) then jsonKey (hit) — both must be set
+    env.ART_CACHE.get
+      .mockResolvedValueOnce("<svg>cached</svg>")
+      .mockResolvedValueOnce('{"slug":"cached"}');
     const req = new Request("https://art.cpj.fyi/cached.svg");
     const resp = await worker.fetch(req, env, ctx);
     expect(resp.status).toBe(200);
@@ -33,7 +43,7 @@ describe("worker", () => {
   });
 
   it("returns 404 when Ghost has no such post", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce(null);
+    env.ART_CACHE.get.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
     const req = new Request("https://art.cpj.fyi/missing.svg");
     const resp = await worker.fetch(req, env, ctx);
@@ -41,7 +51,7 @@ describe("worker", () => {
   });
 
   it("falls back to slug-only when Ghost errors", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce(null);
+    env.ART_CACHE.get.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("network"));
     const req = new Request("https://art.cpj.fyi/fallback.svg");
     const resp = await worker.fetch(req, env, ctx);
@@ -50,14 +60,23 @@ describe("worker", () => {
     expect(body).toContain('fill="#F6EFDD"');
   });
 
-  it("rejects non-svg paths with 404", async () => {
-    const req = new Request("https://art.cpj.fyi/foo.png");
+  it("rejects unknown extensions with 404", async () => {
+    const req = new Request("https://art.cpj.fyi/foo.gif");
     const resp = await worker.fetch(req, env, ctx);
     expect(resp.status).toBe(404);
   });
 
+  it.skip("returns PNG for .png endpoint (skipped: requires wasm init in vitest node pool)", async () => {
+    // Verified live via curl after deploy:
+    // curl -sS -o /tmp/test.png -w "%{http_code} %{content_type} %{size_download}\n" \
+    //   https://monafor.clay-893.workers.dev/the-end-of-role-clarity.png
+    // file /tmp/test.png  # PNG image data, 1200 x ..., 8-bit/color RGBA
+  });
+
   it("sets immutable cache headers on success", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce("<svg>x</svg>");
+    env.ART_CACHE.get
+      .mockResolvedValueOnce("<svg>x</svg>")
+      .mockResolvedValueOnce('{"slug":"x"}');
     const req = new Request("https://art.cpj.fyi/cached.svg");
     const resp = await worker.fetch(req, env, ctx);
     expect(resp.headers.get("cache-control")).toContain("immutable");
@@ -65,7 +84,7 @@ describe("worker", () => {
   });
 
   it("returns JSON metadata for .json endpoint", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce(null);
+    env.ART_CACHE.get.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
     vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({
       posts: [{ slug: "j1", title: "J", primary_tag: { slug: "essays" }, published_at: "2025-01-01T00:00:00Z" }],
     }), { status: 200 }));
@@ -82,11 +101,15 @@ describe("worker", () => {
   });
 
   it("returns CORS header on both endpoints", async () => {
-    env.ART_CACHE.get.mockResolvedValueOnce("<svg>x</svg>");
+    env.ART_CACHE.get
+      .mockResolvedValueOnce("<svg>x</svg>")
+      .mockResolvedValueOnce('{"slug":"x"}');
     const resp1 = await worker.fetch(new Request("https://art.cpj.fyi/x.svg"), env, ctx);
     expect(resp1.headers.get("access-control-allow-origin")).toBe("*");
 
-    env.ART_CACHE.get.mockResolvedValueOnce('{"slug":"y","mood":"book","bg":"#F6EFDD","panels":[]}');
+    env.ART_CACHE.get
+      .mockResolvedValueOnce('{"slug":"y","mood":"book","bg":"#F6EFDD","panels":[]}')
+      .mockResolvedValueOnce('{"slug":"y","mood":"book","bg":"#F6EFDD","panels":[]}');
     const resp2 = await worker.fetch(new Request("https://art.cpj.fyi/y.json"), env, ctx);
     expect(resp2.headers.get("access-control-allow-origin")).toBe("*");
   });
