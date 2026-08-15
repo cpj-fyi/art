@@ -44,7 +44,9 @@ describe("worker", () => {
 
   it("returns 404 when Ghost has no such post", async () => {
     env.ART_CACHE.get.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }));
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify({ posts: [] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ pages: [] }), { status: 200 }));
     const req = new Request("https://art.cpj.fyi/missing.svg");
     const resp = await worker.fetch(req, env, ctx);
     expect(resp.status).toBe(404);
